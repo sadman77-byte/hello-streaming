@@ -9,8 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@opennextjs/cloudflare": "^1.20.12",
     "better-sqlite3": "^13.0.3",
-    "next": "16.4.0",
+    "next": "^16.4.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -18,13 +19,15 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/turbopack": "^4",
     "eslint": "^9",
-    "eslint-config-next": "16.4.0",
+    "eslint-config-next": "^16.4.1",
     "postcss": "^8.5.30",
     "tailwindcss": "^4",
     "wrangler": "^4.151.0"
   },
   "allowScripts": {
     "better-sqlite3@13.0.3": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "esbuild@0.28.2": true,
+    "workerd@1.20261012.1": true
   }
 }

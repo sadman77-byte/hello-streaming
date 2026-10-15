@@ -51,3 +51,13 @@ next-env.d.ts
 *.backup-*
 *.before-*
 *.diagnostic-backup
+
+.env
+.env.*
+!.env.example
+hello.db
+hello.db-*
+*.backup*
+.next/
+node_modules/
+.open-next/
