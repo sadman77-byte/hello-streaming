@@ -1,0 +1,1 @@
+import Link from 'next/link';export default function Settings(){return <main className="min-h-screen bg-slate-950 text-white p-8"><Link href="/">← Home</Link><h1 className="text-3xl my-6">Settings</h1><p>Language selector is available on the dashboard. Authentication, payments and creator verification are planned integrations.</p></main>}
