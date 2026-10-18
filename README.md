@@ -22,6 +22,27 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
++-----------------------------------------------------------------------+
+|                             Client Layer                              |
+|   (Multi-Language UI | Custom Reactions | Voice & Text Comments)      |
++-----------------------------------------------------------------------+
+                                   |
+                                   v
++-----------------------------------------------------------------------+
+|                    Unified Media Abstraction Layer                    |
+|       +-------------------+-------------------+------------------+    |
+|       |   YouTube API     |   Bilibili API    | Local Video/PWA  |    |
+|       +-------------------+-------------------+------------------+    |
++-----------------------------------------------------------------------+
+                                   |
+                  +----------------+----------------+
+                  |                                 |
+                  v                                 v
++----------------------------------+    +-------------------------------+
+|    Edge Storage Engine           |    |    AI Processing Pipeline     |
+|    (IndexedDB / Offline Cache)   |    |    (Transcript & Summary)    |
++----------------------------------+    +-------------------------------+
+
 To learn more about Next.js, take a look at the following resources:
 
 - [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
