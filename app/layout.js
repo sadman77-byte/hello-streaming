@@ -1,5 +1,6 @@
 import GlobalLanguageBar from './components/GlobalLanguageBar';
 import { LanguageProvider } from './components/LanguageProvider';
+import ServiceWorkerRegister from './components/ServiceWorkerRegister';
 import './globals.css';
 
 export const metadata = {
@@ -11,6 +12,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="bn">
       <body>
+        <ServiceWorkerRegister />
         <LanguageProvider>
           <GlobalLanguageBar />
           {children}
