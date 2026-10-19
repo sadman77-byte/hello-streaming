@@ -79,6 +79,7 @@ export default function StudioPage() {
         </p>
 
         <div style={styles.actions}>
+          <Link href="/ai-studio" style={styles.button}>AI Transcript Studio (Pollinations)</Link>
           <button onClick={loadVideos} style={styles.button}>
             Refresh
           </button>
