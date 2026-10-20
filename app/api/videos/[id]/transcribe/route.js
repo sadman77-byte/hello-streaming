@@ -1,92 +1,59 @@
-import fs from 'fs';
-import path from 'path';
 import { NextResponse } from 'next/server';
 import db from '../../../../../lib/db';
 
-export async function POST(req, { params }) {
-  const id = Number(params.id);
-  if (!id) return NextResponse.json({ error: 'Invalid id' }, { status: 400 });
+export const runtime = 'nodejs';
 
-  const video = db.prepare('SELECT * FROM videos WHERE id = ?').get(id);
-  if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
-
-  // Try YouTube public captions first
+export async function POST(request, { params }) {
   try {
-    const { getTranscript } = await import('youtube-transcript');
-    const match = (video.url || '').match(/(?:v=|\/)([a-zA-Z0-9_-]{11})/);
-    const ytId = match ? match[1] : null;
-    if (ytId) {
-      try {
-        const segments = await getTranscript(ytId);
-        const text = Array.isArray(segments) ? segments.map(s => s.text).join(' ') : '';
-        if (text && text.trim()) {
-          db.prepare('UPDATE videos SET transcript = ? WHERE id = ?').run(text, id);
-          return NextResponse.json({ transcript: text, source: 'youtube_captions' });
-        }
-      } catch (err) {
-        // continue to provider fallback
-        console.error('youtube-transcript failed', err?.message || err);
+    const { id } = await params;
+    const videoId = Number(id);
+    if (!Number.isSafeInteger(videoId) || videoId < 1) {
+      return NextResponse.json({ error: 'Invalid video ID' }, { status: 400 });
+    }
+    const video = db.prepare('SELECT * FROM videos WHERE id = ?').get(videoId);
+    if (!video) return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    if (video.transcript?.trim()) {
+      return NextResponse.json({ transcript: video.transcript, source: 'saved' });
+    }
+
+    const rawUrl = String(video.url || '');
+    let ytId = null;
+    try {
+      const url = new URL(rawUrl);
+      const host = url.hostname.toLowerCase();
+      if (['youtube.com', 'www.youtube.com', 'm.youtube.com'].includes(host)) {
+        ytId = url.searchParams.get('v') || url.pathname.match(/^\/(?:shorts|embed)\/([a-zA-Z0-9_-]{11})/)?.[1];
+      } else if (host === 'youtu.be') {
+        ytId = url.pathname.split('/')[1];
       }
+    } catch {}
+    if (!ytId || !/^[a-zA-Z0-9_-]{11}$/.test(ytId)) {
+      return NextResponse.json({
+        error: 'এই ভিডিওর স্বয়ংক্রিয় captions পাওয়া যায়নি। নিজের অডিও/ভিডিও ফাইল AI Video Tools-এ আপলোড করে Transcribe করো।',
+      }, { status: 422 });
     }
-  } catch (e) {
-    console.warn('youtube-transcript not available', e?.message || e);
-  }
 
-  // Fallback to provider (Whisper via OpenAI). Read provider key from data/providers.json
-  const providersPath = path.join(process.cwd(), 'data', 'providers.json');
-  let providers = {};
-  try {
-    if (fs.existsSync(providersPath)) {
-      providers = JSON.parse(fs.readFileSync(providersPath, 'utf8') || '{}');
+    try {
+      const mod = await import('youtube-transcript');
+      const getTranscript = mod.getTranscript || mod.YoutubeTranscript?.fetchTranscript;
+      if (typeof getTranscript !== 'function') throw new Error('Caption library unavailable');
+      const segments = await getTranscript(ytId);
+      const transcript = Array.isArray(segments) ? segments.map(s => s.text || '').join(' ').trim() : '';
+      if (!transcript) throw new Error('No captions returned');
+      try {
+        db.prepare('UPDATE videos SET transcript = ? WHERE id = ?').run(transcript, videoId);
+      } catch (error) {
+        console.warn('Transcript save unavailable:', error?.message);
+      }
+      return NextResponse.json({ transcript, source: 'youtube_captions' });
+    } catch (error) {
+      console.warn('YouTube captions unavailable:', error?.message);
+      return NextResponse.json({
+        error: 'এই YouTube ভিডিওর captions পাওয়া যায়নি। AI Video Tools-এ নিজের অডিও/ভিডিও ফাইল দিয়ে Transcribe করো।',
+      }, { status: 422 });
     }
-  } catch (e) {
-    console.error('Failed to read providers.json', e?.message || e);
-  }
-
-  const OPENAI_KEY = providers.openai || providers.OPENAI_API_KEY || null;
-  if (!OPENAI_KEY) {
-    return NextResponse.json({ error: 'No captions found and no transcription provider configured' }, { status: 400 });
-  }
-
-  try {
-    // download audio using ytdl-core
-    const ytdl = (await import('ytdl-core')).default;
-    const tmpDir = path.join(process.cwd(), 'tmp');
-    if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir, { recursive: true });
-    const outFile = path.join(tmpDir, `audio-${id}.mp3`);
-
-    await new Promise((resolve, reject) => {
-      const stream = ytdl(video.url, { filter: 'audioonly', quality: 'highestaudio' })
-        .pipe(fs.createWriteStream(outFile));
-      stream.on('finish', resolve);
-      stream.on('error', reject);
-    });
-
-    const FormData = (await import('form-data')).default;
-    const form = new FormData();
-    form.append('file', fs.createReadStream(outFile));
-    form.append('model', 'whisper-1');
-
-    const resp = await fetch('https://api.openai.com/v1/audio/transcriptions', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${OPENAI_KEY}`, ...form.getHeaders() },
-      body: form,
-    });
-
-    const j = await resp.json();
-    if (!resp.ok) throw new Error(j.error?.message || 'Transcription provider error');
-
-    const transcriptText = j.text || j.transcript || '';
-    if (transcriptText && transcriptText.trim()) {
-      db.prepare('UPDATE videos SET transcript = ? WHERE id = ?').run(transcriptText, id);
-      try { fs.unlinkSync(outFile); } catch {}
-      return NextResponse.json({ transcript: transcriptText, source: 'whisper' });
-    } else {
-      try { fs.unlinkSync(outFile); } catch {}
-      return NextResponse.json({ error: 'Transcription returned empty text' }, { status: 500 });
-    }
-  } catch (err) {
-    console.error(err);
-    return NextResponse.json({ error: err.message || 'Transcription failed' }, { status: 500 });
+  } catch (error) {
+    console.error('Video transcription error:', error);
+    return NextResponse.json({ error: 'ভিডিও ট্রান্সক্রিপশন সার্ভারে সমস্যা হয়েছে।' }, { status: 500 });
   }
 }
