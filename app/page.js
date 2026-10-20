@@ -1,6 +1,5 @@
 'use client';
 
-import TranscribeSubscribe from './components/TranscribeSubscribe';
 import YouTubeSearch from './components/YouTubeSearch';
 import BilibiliSearch from './components/BilibiliSearch';
 import LocalVideoLibrary from './components/LocalVideoLibrary';
@@ -290,24 +289,8 @@ export default function Home() {
                   </p>
 
                   <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4 text-sm">
--                    <span className="text-slate-400">
--                      {t('watchVideo')}
--                    </span>
--
--                    <span className="text-rose-400">
--                      ▶ {t('play')} →
--                    </span>
-+                    <div className="flex items-center gap-3">
-+                      <span className="text-slate-400">
-+                        {t('watchVideo')}
-+                      </span>
-+
-+                      <span className="text-rose-400">
-+                        ▶ {t('play')} →
-+                      </span>
-+
-+                      <TranscribeSubscribe videoId={v.id} />
-+                    </div>
+                    <span className="text-slate-400">{t('watchVideo')}</span>
+                    <span className="text-rose-400">▶ {t('play')} →</span>
                   </div>
                 </div>
               </Link>
