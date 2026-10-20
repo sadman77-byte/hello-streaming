@@ -56,50 +56,52 @@ export async function POST(request) {
 
     const base64 = Buffer.from(await file.arrayBuffer()).toString('base64');
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent',
-      {
+    const endpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent';
+    const payload = JSON.stringify({
+      contents: [{
+        role: 'user',
+        parts: [
+          { text: 'Transcribe all clearly audible spoken words in this audio or video as accurately as possible. Preserve the original language and writing system. Do not summarize, translate, or add commentary. If no speech is audible, say so briefly.' },
+          { inlineData: { mimeType, data: base64 } },
+        ],
+      }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 8000 },
+    });
+
+    let data = {};
+    let providerStatus = 0;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const response = await fetch(endpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey,
-        },
-        body: JSON.stringify({
-          contents: [{
-            role: 'user',
-            parts: [
-              {
-                text: 'Transcribe all clearly audible spoken words in this audio or video as accurately as possible. Preserve the original language and writing system. Do not summarize, translate, or add commentary. If no speech is audible, say so briefly.',
-              },
-              {
-                inlineData: {
-                  mimeType,
-                  data: base64,
-                },
-              },
-            ],
-          }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 8000,
-          },
-        }),
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+        body: payload,
         cache: 'no-store',
-        signal: AbortSignal.timeout(60000),
+        signal: AbortSignal.timeout(45000),
+      });
+      providerStatus = response.status;
+      data = await response.json().catch(() => ({}));
+      if (response.ok) break;
+
+      const providerMessage = data.error?.message || 'Unknown provider error';
+      console.error('Gemini transcription provider error:', providerStatus, providerMessage);
+      const retryable = [408, 429, 500, 502, 503, 504].includes(providerStatus);
+      if (retryable && attempt < 2) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * (2 ** attempt) + Math.floor(Math.random() * 300)));
+        continue;
       }
-    );
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) {
-      console.error(
-        'Gemini transcription provider error:',
-        response.status,
-        data.error?.message || ''
-      );
+      const safeMessage = providerStatus === 429
+        ? 'Gemini rate limit বা quota শেষ হয়েছে। Google AI Studio-তে quota পরীক্ষা করো।'
+        : providerStatus === 401 || providerStatus === 403
+          ? 'Gemini API key বা permission সমস্যা। Vercel Environment Variables পরীক্ষা করো।'
+          : providerStatus === 404
+            ? 'Gemini model পাওয়া যায়নি। Model name ও API access পরীক্ষা করো।'
+            : providerStatus === 400
+              ? 'Gemini অনুরোধ গ্রহণ করেনি। ফাইল ও model compatibility পরীক্ষা করো।'
+              : 'Gemini provider সাময়িকভাবে ব্যর্থ হয়েছে।';
       return NextResponse.json(
-        { error: `Gemini transcription ব্যর্থ হয়েছে (HTTP ${response.status})। পরে আবার চেষ্টা করো।` },
-        { status: 502 }
+        { error: safeMessage, providerStatus, providerCode: data.error?.status || null },
+        { status: providerStatus === 429 ? 429 : 502 }
       );
     }
 
