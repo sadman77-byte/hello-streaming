@@ -27,13 +27,15 @@ export default function TranscribeSubscribe({ videoId }) {
 
   async function handleTranscribe(e) {
     e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (busy) return;
     setBusy(true);
     try {
       const res = await fetch(`/api/videos/${videoId}/transcribe`, { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Transcription failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Transcription failed (HTTP ${res.status})`);
       // navigate to watch page so user sees transcript
+      router.refresh();
       router.push(`/watch/${videoId}`);
     } catch (err) {
       alert(err.message || 'Transcription failed');
@@ -48,8 +50,8 @@ export default function TranscribeSubscribe({ videoId }) {
     setSubscribing(true);
     try {
       const res = await fetch(`/api/videos/${videoId}/subscribe`, { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Subscribe failed');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Subscribe failed (HTTP ${res.status})`);
       setSubscribed(!!data.subscribed);
       // optionally notify user
     } catch (err) {
