@@ -54,6 +54,22 @@ export default function VideoAI({ videoId, initialTranscript = '', initialSummar
     return data;
   }
 
+  async function autoTranscribe() {
+    setBusy('transcribe');
+    setNotice('');
+    try {
+      const response = await fetch(`/api/videos/${videoId}/transcribe`, { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.error || `Transcription failed (HTTP ${response.status})`);
+      setTranscript(data.transcript || '');
+      setNotice('Transcript পাওয়া গেছে।');
+    } catch (error) {
+      setNotice(error.message || 'Transcription failed');
+    } finally {
+      setBusy('');
+    }
+  }
+
   async function saveTranscript() {
     setBusy('save');
     setNotice('');
@@ -138,6 +154,9 @@ export default function VideoAI({ videoId, initialTranscript = '', initialSummar
           className="w-full rounded-xl border border-white/10 bg-[#080b14] p-4 text-sm leading-6 outline-none focus:border-rose-500"
         />
         <div className="mt-3 flex flex-wrap items-center gap-3">
+          <button type="button" className={buttonClass} onClick={autoTranscribe} disabled={!!busy}>
+            {busy === 'transcribe' ? 'Transcribing...' : 'Transcribe'}
+          </button>
           <button className={buttonClass} onClick={saveTranscript} disabled={!!busy}>
             {busy === 'save' ? 'Saving...' : 'Save transcript'}
           </button>
