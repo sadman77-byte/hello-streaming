@@ -22,7 +22,8 @@ export default function AIStudio(){
  useEffect(()=>{
   try{
    setTranscript(localStorage.getItem('hello-ai-transcript')||'');
-   setMessages(JSON.parse(localStorage.getItem('hello-ai-chat')||'[]'));
+   const saved=JSON.parse(localStorage.getItem('hello-ai-chat')||'[]');
+   setMessages(Array.isArray(saved)?saved.filter(x=>x&&typeof x.content==='string'&&['user','assistant'].includes(x.role)).slice(-20):[]);
   }catch{}
   setOnline(navigator.onLine);
   const on=()=>setOnline(navigator.onLine);
@@ -38,14 +39,14 @@ export default function AIStudio(){
    const headers={};
    if(apiKey.trim())headers['x-nararouter-api-key']=apiKey.trim();
    const response=await fetch('/api/ai/nararouter',{headers,cache:'no-store'});
-   const data=await response.json();
+   const data=await response.json().catch(()=>({}));
    if(Array.isArray(data.models)&&data.models.length){
     setModels(data.models);
     setModelSource(data.source||'unknown');
     if(!data.models.includes(model))setModel(data.models.includes('auto/bynara')?'auto/bynara':data.models[0]);
    }
    if(data.warning)setStatus('Model তালিকা লোড হয়নি; default model দিয়ে চেষ্টা করা যাবে। '+data.warning);
-  }catch{setModelSource('fallback')}
+  }catch(error){setModelSource('fallback');setStatus('Model তালিকা আনা যায়নি। '+(error?.message||'Network error'))}
  }
 
  async function ask(){
