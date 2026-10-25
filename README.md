@@ -33,6 +33,8 @@
 * **Offline Playback:** Once loaded online, the entire application interface and cached data are stored in the browser, allowing it to function seamlessly even during network outages[cite: 10].
 * **Local Video Library:** Manages and plays local video files stored on the user's device offline using the browser's `IndexedDB`[cite: 10].
 
+* **Bookmark YouTube videos:** There is a facility of bookmarking YouTube videos, which will also store in both online and offline.
+  
 ### 2. 🤖 AI-Powered Video Studio & Chat
 * **Transcript Summarization:** Processes manually pasted transcripts from YouTube or other sources to generate accurate summaries and key takeaways[cite: 1, 2].
 * **AI Chat Assistant:** Features an integrated chat assistant to answer questions and discuss topics directly based on the video transcript[cite: 3, 17].
