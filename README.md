@@ -2,6 +2,7 @@
 
 **HelloStreaming** is a modern, lightweight, and disconnected-capable video aggregator and AI companion platform[cite: 1, 8, 10]. It allows users to search and watch videos from multiple sources like YouTube and Bilibili, while offering transcript-based AI summarization, voice commenting, and browser-cached offline support[cite: 1, 6, 8, 10].
 
+This has made by RAG through extracting the data from Commoncrawl. 
 ---
 
 ## 🚀 Key Features
