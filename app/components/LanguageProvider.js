@@ -18,6 +18,8 @@ export function LanguageProvider({ children }) {
     const saved = localStorage.getItem('hello-language');
 
     if (saved && languages[saved]) {
+      // Browser hydration restores the persisted language once on mount.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLanguage(saved);
       document.documentElement.lang = saved;
     }

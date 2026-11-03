@@ -31,6 +31,8 @@ export default function StudioPage() {
   }, []);
 
   useEffect(() => {
+    // Initial data load intentionally updates state after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadVideos();
   }, [loadVideos]);
 
@@ -79,7 +81,7 @@ export default function StudioPage() {
         </p>
 
         <div style={styles.actions}>
-          <Link href="/ai-studio" style={styles.button}>AI Transcript Studio (Pollinations)</Link>
+          <Link href="/ai-studio" style={styles.button}>Open AI Studio (NaraRouter)</Link>
           <button onClick={loadVideos} style={styles.button}>
             Refresh
           </button>

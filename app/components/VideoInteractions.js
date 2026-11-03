@@ -133,6 +133,8 @@ export default function VideoInteractions({
     let active = true;
     const createdUrls = [];
 
+    // Restore browser-persisted interaction state when the video changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReady(false);
     setAudioUrls({});
     setComments([]);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 export default function Error({ error, reset }) {
   useEffect(() => {
@@ -15,7 +16,7 @@ export default function Error({ error, reset }) {
         {error?.digest && <p className="mt-3 break-all text-xs text-slate-400">Error ID: {error.digest}</p>}
         <div className="mt-6 flex flex-wrap gap-3">
           <button type="button" onClick={() => reset()} className="rounded-xl bg-rose-600 px-5 py-3 font-semibold">Retry</button>
-          <a href="/" className="rounded-xl bg-slate-700 px-5 py-3 font-semibold">Home</a>
+          <Link href="/" className="rounded-xl bg-slate-700 px-5 py-3 font-semibold">Home</Link>
           <button type="button" onClick={() => window.location.reload()} className="rounded-xl border border-white/20 px-5 py-3">Reload</button>
         </div>
       </section>

@@ -21,6 +21,8 @@ export default function AIStudio(){
 
  useEffect(()=>{
   try{
+   // Hydrate non-secret draft state from this browser only.
+   // eslint-disable-next-line react-hooks/set-state-in-effect
    setTranscript(localStorage.getItem('hello-ai-transcript')||'');
    const saved=JSON.parse(localStorage.getItem('hello-ai-chat')||'[]');
    setMessages(Array.isArray(saved)?saved.filter(x=>x&&typeof x.content==='string'&&['user','assistant'].includes(x.role)).slice(-20):[]);

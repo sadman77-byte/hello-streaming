@@ -189,7 +189,7 @@ export default async function Watch({ params }) {
 
         <p className="mt-6 text-xs leading-6 text-slate-500">
           Playback depends on the source, network connection, browser support
-          and the provider's embedding permissions. Publish only content you
+          and the provider&apos;s embedding permissions. Publish only content you
           own or are authorized to share.
         </p>
       </div>

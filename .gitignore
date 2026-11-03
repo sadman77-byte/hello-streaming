@@ -1,17 +1,12 @@
-diff --git a/.gitignore b/.gitignore
-*** Begin Patch
-*** Update File: .gitignore
-@@
- .env
- .env.*
- !.env.example
- hello.db
- hello.db-*
- *.backup*
- .next/
- node_modules/
- .open-next/
-+
-+# Local provider keys and runtime data
-+data/
-*** End Patch
+.env
+.env.*
+!.env.example
+hello.db
+hello.db-*
+*.backup*
+.next/
+node_modules/
+.open-next/
+data/
+*.db-shm
+*.db-wal

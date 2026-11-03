@@ -93,6 +93,7 @@ export default function Home() {
             <Link href="/studio" className="hover:text-rose-400">
               {t('studio')}
             </Link>
+            <Link href="/ai-studio" className="hover:text-rose-400">AI Studio</Link>
             <Link href="/earnings" className="hover:text-rose-400">
               {t('earnings')}
             </Link>

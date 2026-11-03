@@ -103,3 +103,75 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 📄 License
 
 This project is licensed under the MIT License.
+
+## Server configuration
+
+All secrets below are server-only environment variables. Never prefix a secret with `NEXT_PUBLIC_`, commit it, put it in client JavaScript, or save it in `localStorage`.
+
+### AI providers
+
+Configure any provider you want to use; the video AI route and `/chat` route use the matching server key:
+
+```dotenv
+OPENAI_API_KEY=
+MISTRAL_API_KEY=
+ANTHROPIC_API_KEY=
+DEEPSEEK_API_KEY=
+XAI_API_KEY=
+GEMINI_API_KEY=
+NARAROUTER_API_KEY=
+POLLINATIONS_API_KEY=
+OPENAI_CHAT_MODEL=
+MISTRAL_CHAT_MODEL=
+CLAUDE_CHAT_MODEL=
+DEEPSEEK_CHAT_MODEL=
+GROK_CHAT_MODEL=
+GEMINI_CHAT_MODEL=
+```
+
+Provider requests are made server-side. Bing/Copilot are not silently claimed as supported because they require a separate Microsoft/Azure integration.
+
+### Payments
+
+`NEXT_PUBLIC_SITE_URL` must be the public `http(s)` origin used for callbacks. Live payments require HTTPS.
+
+```dotenv
+NEXT_PUBLIC_SITE_URL=https://example.com
+SSLCOMMERZ_MODE=sandbox
+SSLCOMMERZ_STORE_ID=
+SSLCOMMERZ_STORE_PASSWORD=
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+PAYPAL_MODE=sandbox
+PAYPAL_CLIENT_ID=
+PAYPAL_CLIENT_SECRET=
+
+# Reserved direct-provider configuration. These adapters intentionally return
+# unsupported until their exact merchant contracts/signing are implemented.
+BKASH_BASE_URL=
+BKASH_APP_KEY=
+BKASH_APP_SECRET=
+BKASH_USERNAME=
+BKASH_PASSWORD=
+PAYTM_MERCHANT_ID=
+PAYTM_MERCHANT_KEY=
+PAYTM_WEBSITE=
+ALIPAY_APP_ID=
+ALIPAY_PRIVATE_KEY=
+ALIPAY_PUBLIC_KEY=
+GOOGLE_PAY_MERCHANT_ID=
+```
+
+### Callback and webhook setup
+
+- SSLCommerz uses `/api/payment/callback` for success/fail/cancel and `/api/payment/ipn` for IPN. Its hosted page exposes bKash, Nagad, and Rocket only when those methods are enabled on the merchant account.
+- Stripe uses `/api/payment/webhook/stripe`; subscribe it to `checkout.session.completed` and set its signing secret as `STRIPE_WEBHOOK_SECRET`. Entitlement activation is webhook-driven.
+- PayPal uses `/api/payment/paypal/callback`; the server captures and verifies the order before activating the subscription.
+
+The payment API is `POST /api/payment/create` with `{ planId, provider, customer: { name, email, phone } }`. `GET /api/payment/providers` exposes provider names and configuration status without exposing secrets. Missing credentials and unsupported adapters return safe Bengali/English errors.
+
+Direct bKash, Paytm, and Alipay are scaffolds, not fake success paths: their merchant APIs, token/signature rules, settlement, and callbacks vary by account and region. Google Pay is a wallet/tokenization method and does not directly settle a web payment; use it through a supported processor.
+
+### Payment storage limitation
+
+`lib/payment-store.js` is an intentionally small store interface with a local JSON implementation for development and single-instance demonstrations. Vercel/serverless filesystems are not durable or shared, so production must replace this implementation behind the same interface with a persistent database and unique/idempotency constraints. Do not treat the local JSON file as the sole production payment ledger.
